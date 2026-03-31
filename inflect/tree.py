@@ -35,21 +35,16 @@ from __future__ import unicode_literals
 from __future__ import division
 
 from builtins import str, bytes, dict, int
-from builtins import map, zip, filter
+from builtins import map, zip as _zip, filter
 from builtins import object, range
 
 from io import open
 
 from itertools import chain
 
-try:
-    from config import SLASH
-    from config import WORD, POS, CHUNK, PNP, REL, ANCHOR, LEMMA
-    MBSP = True # Memory-Based Shallow Parser for Python.
-except:
-    SLASH, WORD, POS, CHUNK, PNP, REL, ANCHOR, LEMMA = \
-        "&slash;", "word", "part-of-speech", "chunk", "preposition", "relation", "anchor", "lemma"
-    MBSP = False
+SLASH, WORD, POS, CHUNK, PNP, REL, ANCHOR, LEMMA = \
+    "&slash;", "word", "part-of-speech", "chunk", "preposition", "relation", "anchor", "lemma"
+MBSP = False
 
 # B- marks the start of a chunk: the/DT/B-NP cat/NN/I-NP
 # I- words are inside a chunk.
@@ -84,8 +79,6 @@ def unique(iterable):
     """
     seen = set()
     return [x for x in iterable if x not in seen and not seen.add(x)]
-
-_zip = zip
 
 
 def zip(*args, **kwargs):
@@ -727,7 +720,10 @@ class Sentence(object):
         return [word for word in self if word.type.startswith("NN")]
 
     @property
-    def verbs(self):
+    def verbs_VB(self):
+        """
+        Note: Because of the redefinition of verbs this property was not previously accessible.
+        """
         return [word for word in self if word.type.startswith("VB")]
 
     @property
@@ -1520,8 +1516,8 @@ class XMLNode(object):
 
 # The structure of linked anchor chunks and PNP attachments
 # is collected from _parse_token() calls.
-_anchors = {} # {'A1': [['eat', 'VBP', 'B-VP', 'O', 'VP-1', 'O', 'eat', 'O']]}
-_attachments = {} # {'A1': [[['with', 'IN', 'B-PP', 'B-PNP', 'PP', 'O', 'with', 'O'],
+_anchors: dict[str,list[list[str]]] = {} # {'A1': [['eat', 'VBP', 'B-VP', 'O', 'VP-1', 'O', 'eat', 'O']]}
+_attachments: dict[str,list[list[str]]]  = {} # {'A1': [[['with', 'IN', 'B-PP', 'B-PNP', 'PP', 'O', 'with', 'O'],
                   #           ['a', 'DT', 'B-NP', 'I-PNP', 'NP', 'O', 'a', 'O'],
                   #           ['fork', 'NN', 'I-NP', 'I-PNP', 'NP', 'O', 'fork', 'O']]]}
 
@@ -1582,12 +1578,7 @@ def parse_string(xml):
         string += tokens + "\n"
     # Return a TokenString, which is a unicode string that transforms easily
     # into a plain str, a list of tokens, or a Sentence.
-    try:
-        if MBSP:
-            from mbsp import TokenString
-        return TokenString(string.strip(), tags=format, language=language)
-    except:
-        return TaggedString(string.strip(), tags=format, language=language)
+    return TaggedString(string.strip(), tags=format, language=language)
 
 
 def _parse_tokens(chunk, format=[WORD, POS, CHUNK, PNP, REL, ANCHOR, LEMMA]):
@@ -1687,7 +1678,7 @@ def nltk_tree(sentence):
     """ Returns an NLTK nltk.tree.Tree object from the given Sentence.
         The NLTK module should be on the search path somewhere.
     """
-    from nltk import tree
+    from nltk import tree #type: ignore
 
     def do_pnp(pnp):
         # Returns the PNPChunk (and the contained Chunk objects) in NLTK bracket format.
@@ -1844,8 +1835,6 @@ def table(sentence, fill=1, placeholder="-"):
     # and has extra spacing so that words across sentences line out nicely below each other.
     for i, column in enumerate(columns):
         columns[i] = outline(column, fill + 10 * (i == 0), align=("left", "right")[i == 0])
-    # Anchor column is useful in MBSP but not in pattern.en.
-    if not MBSP:
-        del columns[6]
+    del columns[6]
     # Create a string with one row (i.e., one token) per line.
     return "\n".join(["".join([x[i] for x in columns]) for i in range(len(columns[0]))])

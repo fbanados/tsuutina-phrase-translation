@@ -26,13 +26,15 @@ import operator
 
 from io import open
 
-from codecs import BOM_UTF8
-BOM_UTF8 = BOM_UTF8.decode('utf-8')
+from codecs import BOM_UTF8 as BOM_UTF8_
+BOM_UTF8 = BOM_UTF8_.decode('utf-8')
 
 from xml.etree import cElementTree
 from itertools import chain
 from collections import defaultdict
 from math import log, sqrt
+from typing import Optional
+from types import ModuleType
 
 try:
     MODULE = os.path.dirname(os.path.realpath(__file__))
@@ -140,7 +142,7 @@ def topmine_ngramms(doc, ng, threshhold=1):
 
 
 class NGrammer(object):
-    _phrase2freq = {}
+    _phrase2freq :dict[str,int] = {}
     _delimiters = None
     _delimiters_regex = None
     _lengthInWords = 0
@@ -659,85 +661,78 @@ class Frequency(lazydict):
 # unless (put simply) a majority of other patterns learned by the classifier disagrees.
 
 
-class Model(object):
+# class Model(object):
 
-    def __init__(self, path="", classifier=None, known=set(), unknown=set()):
-        """ A language model using a classifier (e.g., SLP, SVM) trained on morphology and context.
-        """
-        try:
-            from pattern.vector import Classifier
-            from pattern.vector import Perceptron
-        except ImportError:
-            sys.path.insert(0, os.path.join(MODULE, ".."))
-            from vector import Classifier
-            from vector import Perceptron
-        self._path = path
-        # Use a property instead of a subclass, so users can choose their own classifier.
-        self._classifier = Classifier.load(path) if path else classifier or Perceptron()
-        # Parser.lexicon entries can be ambiguous (e.g., about/IN  is RB 25% of the time).
-        # Parser.lexicon entries also in Model.unknown are overruled by the model.
-        # Parser.lexicon entries also in Model.known are not learned by the model
-        # (only their suffix and context is learned, see Model._v() below).
-        self.unknown = unknown | self._classifier._data.get("model_unknown", set())
-        self.known = known
+#     def __init__(self, path="", classifier=None, known=set(), unknown=set()):
+#         """ A language model using a classifier (e.g., SLP, SVM) trained on morphology and context.
+#         """
+#         self._path = path
+#         # Use a property instead of a subclass, so users can choose their own classifier.
+#         self._classifier = Classifier.load(path) if path else classifier or Perceptron()
+#         # Parser.lexicon entries can be ambiguous (e.g., about/IN  is RB 25% of the time).
+#         # Parser.lexicon entries also in Model.unknown are overruled by the model.
+#         # Parser.lexicon entries also in Model.known are not learned by the model
+#         # (only their suffix and context is learned, see Model._v() below).
+#         self.unknown = unknown | self._classifier._data.get("model_unknown", set())
+#         self.known = known
 
-    @property
-    def path(self):
-        return self._path
+#     @property
+#     def path(self):
+#         return self._path
 
-    @classmethod
-    def load(self, path="", lexicon={}):
-        return Model(path, lexicon)
+#     @classmethod
+#     def load(self, path="", lexicon={}):
+#         return Model(path, lexicon)
 
-    def save(self, path, final=True):
-        self._classifier._data["model_unknown"] = self.unknown
-        self._classifier.save(path, final) # final = unlink training data (smaller file).
+#     def save(self, path, final=True):
+#         self._classifier._data["model_unknown"] = self.unknown
+#         self._classifier.save(path, final) # final = unlink training data (smaller file).
 
-    def train(self, token, tag, previous=None, next=None):
-        """ Trains the model to predict the given tag for the given token,
-            in context of the given previous and next (token, tag)-tuples.
-        """
-        self._classifier.train(self._v(token, previous, next), type=tag)
+#     def train(self, token, tag, previous=None, next=None):
+#         """ Trains the model to predict the given tag for the given token,
+#             in context of the given previous and next (token, tag)-tuples.
+#         """
+#         self._classifier.train(self._v(token, previous, next), type=tag)
 
-    def classify(self, token, previous=None, next=None, **kwargs):
-        """ Returns the predicted tag for the given token,
-            in context of the given previous and next (token, tag)-tuples.
-        """
-        return self._classifier.classify(self._v(token, previous, next), **kwargs)
+#     def classify(self, token, previous=None, next=None, **kwargs):
+#         """ Returns the predicted tag for the given token,
+#             in context of the given previous and next (token, tag)-tuples.
+#         """
+#         return self._classifier.classify(self._v(token, previous, next), **kwargs)
 
-    def apply(self, token, previous=(None, None), next=(None, None)):
-        """ Returns a (token, tag)-tuple for the given token,
-            in context of the given previous and next (token, tag)-tuples.
-        """
-        return [token[0], self._classifier.classify(self._v(token[0], previous, next))]
+#     def apply(self, token, previous=(None, None), next=(None, None)):
+#         """ Returns a (token, tag)-tuple for the given token,
+#             in context of the given previous and next (token, tag)-tuples.
+#         """
+#         return [token[0], self._classifier.classify(self._v(token[0], previous, next))]
 
-    def _v(self, token, previous=None, next=None):
-        """ Returns a training vector for the given token and its context.
-        """
-        def f(v, *s):
-            v[" ".join(s)] = 1
-        p, n = previous, next
-        p = ("", "") if not p else (p[0] or "", p[1] or "")
-        n = ("", "") if not n else (n[0] or "", n[1] or "")
-        v = {}
-        f(v, "b", "b")         # Bias.
-        f(v, "h", token[:1])   # Capitalization.
-        f(v, "w", token[-6:] if token not in self.known or token in self.unknown else "")
-        f(v, "x", token[-3:])  # Word suffix.
-        f(v, "-x", p[0][-3:])   # Word suffix left.
-        f(v, "+x", n[0][-3:])   # Word suffix right.
-        f(v, "-t", p[1])        # Tag left.
-        f(v, "-+", p[1] + n[1]) # Tag left + right.
-        f(v, "+t", n[1])        # Tag right.
-        return v
+#     def _v(self, token, previous=None, next=None):
+#         """ Returns a training vector for the given token and its context.
+#         """
+#         def f(v, *s):
+#             v[" ".join(s)] = 1
+#         p, n = previous, next
+#         p = ("", "") if not p else (p[0] or "", p[1] or "")
+#         n = ("", "") if not n else (n[0] or "", n[1] or "")
+#         v = {}
+#         f(v, "b", "b")         # Bias.
+#         f(v, "h", token[:1])   # Capitalization.
+#         f(v, "w", token[-6:] if token not in self.known or token in self.unknown else "")
+#         f(v, "x", token[-3:])  # Word suffix.
+#         f(v, "-x", p[0][-3:])   # Word suffix left.
+#         f(v, "+x", n[0][-3:])   # Word suffix right.
+#         f(v, "-t", p[1])        # Tag left.
+#         f(v, "-+", p[1] + n[1]) # Tag left + right.
+#         f(v, "+t", n[1])        # Tag right.
+#         return v
 
-    def _get_description(self):
-        return self._classifier.description
+#     def _get_description(self):
+#         return self._classifier.description
 
-    def _set_description(self, s):
-        self._classifier.description = s
+#     def _set_description(self, s):
+#         self._classifier.description = s
 
-    description = property(_get_description, _set_description)
+#     description = property(_get_description, _set_description)
 
 #--- MORPHOLOGICAL RULES ---------------------------------------------------------------------------
 # Brill's algorithm generates lexical (i.e., morphological) rules in the following format:
@@ -1353,8 +1348,8 @@ emoticons = { # (facial expression, sentiment)-keys
     ("cry"  , -1.00): set((":'(", ":'''(", ";'("))
 }
 
-RE_EMOTICONS = [r" ?".join(map(re.escape, e)) for v in EMOTICONS.values() for e in v]
-RE_EMOTICONS = re.compile(r"(%s)($|\s)" % "|".join(RE_EMOTICONS))
+RE_EMOTICONS_ = [r" ?".join(map(re.escape, e)) for v in EMOTICONS.values() for e in v]
+RE_EMOTICONS = re.compile(r"(%s)($|\s)" % "|".join(RE_EMOTICONS_))
 
 # Common emoji.
 EMOJI = \
@@ -1371,8 +1366,8 @@ emoji = { # (facial expression, sentiment)-keys
     ("cry"  , -1.00): set(("😢", "😥", "😓", "😪", "😭", "😿")),
 }
 
-RE_EMOJI = [e for v in EMOJI.values() for e in v]
-RE_EMOJI = re.compile(r"(\s?)(%s)(\s?)" % "|".join(RE_EMOJI))
+RE_EMOJI_ = [e for v in EMOJI.values() for e in v]
+RE_EMOJI = re.compile(r"(\s?)(%s)(\s?)" % "|".join(RE_EMOJI_))
 
 # Mention marker: "@tomdesmedt".
 RE_MENTION = re.compile(r"\@([0-9a-zA-z_]+)(\s|\,|\:|\.|\!|\?|$)")
@@ -1559,7 +1554,7 @@ CC = r"CC|CJ"
 # Chunking rules.
 # CHUNKS[0] = Germanic: RB + JJ precedes NN ("the round table").
 # CHUNKS[1] = Romance : RB + JJ precedes or follows NN ("la table ronde", "une jolie fille").
-CHUNKS = [[
+CHUNKS_ = [[
     # Germanic languages: da, de, en, is, nl, no, sv (also applies to cs, pl, ru, ...)
     (  "NP", r"((NN)/)* ((DT|CD|CC)/)* ((RB|JJ)/)* (((JJ)/(CC|,)/)*(JJ)/)* ((NN)/)+"),
     (  "VP", r"(((MD|TO|RB)/)* ((VB)/)+ ((RP)/)*)+"),
@@ -1577,15 +1572,15 @@ CHUNKS = [[
     ("ADVP", r"((RB)/)+"),
 ]]
 
-for i in (0, 1):
-    for j, (tag, s) in enumerate(CHUNKS[i]):
-        s = s.replace("NN", NN)
-        s = s.replace("VB", VB)
-        s = s.replace("JJ", JJ)
-        s = s.replace("RB", RB)
-        s = s.replace(" ", "")
-        s = re.compile(s)
-        CHUNKS[i][j] = (tag, s)
+def compile_chunk(s: str) -> re.Pattern:
+    s = s.replace("NN", NN)
+    s = s.replace("VB", VB)
+    s = s.replace("JJ", JJ)
+    s = s.replace("RB", RB)
+    s = s.replace(" ", "")
+    return re.compile(s)
+
+CHUNKS = [[(tag, compile_chunk(s)) for (tag, s) in line] for line in CHUNKS_]
 
 # Handle ADJP before VP,
 # so that RB prefers next ADJP over previous VP.
@@ -1847,12 +1842,6 @@ def commandline(parse=Parser().parse):
     p.add_option("-e", "--encoding",  dest="encoding",  action="store_true", help="character encoding", default="utf-8")
     p.add_option("-v", "--version",   dest="version",   action="store_true", help="version info")
     o, arguments = p.parse_args()
-    # Version info.
-    if o.version:
-        sys.path.insert(0, os.path.join(MODULE, "..", ".."))
-        from pattern import __version__
-        print(__version__)
-        sys.path.pop(0)
     # Either a text file (-f) or a text string (-s) must be supplied.
     s = o.file and codecs.open(o.file, "r", o.encoding).read() or o.string
     # The given text can be parsed in two modes:
@@ -1932,7 +1921,7 @@ PARTICIPLE, GERUND = "participle", "gerund"
 # Continuous aspect ≈ progressive aspect.
 CONTINUOUS = CONT = "continuous"
 
-_ = None # prettify the table =>
+_ : None = None # prettify the table =>
 
 # Unique index per tense (= tense + person + number + mood + aspect + negated? + aliases).
 # The index is used to describe the format of the verb lexicon file.
@@ -2022,7 +2011,7 @@ TENSES = {
 # - a short string: "1sg" => 1st person singular present,
 # - a unique index:  1    => 1st person singular present,
 # -  Penn treebank: "VBP" => 1st person singular present.
-TENSES_ID = {}
+TENSES_ID : dict= {}
 TENSES_ID[INFINITIVE] = 0
 for i, (tense, person, number, mood, aspect, negated, aliases) in TENSES.items():
     for a in aliases + (i,):
@@ -2037,14 +2026,14 @@ for i, (tense, person, number, mood, aspect, negated, aliases) in TENSES.items()
             TENSES_ID[(tense, person, pl, mood, aspect, negated)] = i
 
 # Map Penn Treebank tags to unique index.
-for tag, tense in (
+for tag_, tense_ in ( #type: ignore
   ("VB", 0),    # infinitive
   ("VBP", 1),   # present 1 singular
   ("VBZ", 3),   # present 3 singular
   ("VBG", 8),   # present participle
   ("VBN", 24),  # past participle
   ("VBD", 25)): # past
-    TENSES_ID[tag.lower()] = tense
+    TENSES_ID[tag_.lower()] = tense_
 
 # tense(tense=INFINITIVE)
 # tense(tense=(PRESENT, 3, SINGULAR))
@@ -2101,7 +2090,7 @@ def tense_id(*args, **kwargs):
     return TENSES_ID.get(tense.lower(),
            TENSES_ID.get((tense, person, number, mood, aspect, negated)))
 
-tense = tense_id
+#tense = tense_id
 
 #--- VERB CONJUGATIONS -----------------------------------------------------------------------------
 # Verb conjugations based on a table of known verbs and rules for unknown verbs.
@@ -2704,7 +2693,7 @@ class Spelling(lazydict):
 
 LANGUAGES = ["en", "es", "de", "fr", "it", "nl"]
 
-_modules = {}
+_modules: dict[str,ModuleType]= {}
 
 
 def _module(language):
@@ -2785,7 +2774,3 @@ def conjugate(*args, **kwargs):
 
 def predicative(*args, **kwargs):
     return _multilingual("predicative", *args, **kwargs)
-
-
-def suggest(*args, **kwargs):
-    return _multilingual("suggest", *args, **kwargs)

@@ -141,7 +141,8 @@ plural_prepositions = set((
 # - apply to a certain category of words only in classical mode,
 # - apply only in classical mode.
 # Each rule is a (suffix, inflection, category, classic)-tuple.
-plural_rules = [
+# For performance, compile the regular expressions once:
+plural_rules = [[(re.compile(r[0]), r[1], r[2], r[3]) for r in grp] for grp in [
        # 0) Indefinite articles and demonstratives.
     ((   r"^a$|^an$", "some"       , None, False),
      (     r"^this$", "these"      , None, False),
@@ -281,10 +282,7 @@ plural_rules = [
     ), # 14) Assume that the plural takes -s
        #     (cats, programmes, ...).
     ((          r"$", "s"          , None, False),)
-]
-
-# For performance, compile the regular expressions once:
-plural_rules = [[(re.compile(r[0]), r[1], r[2], r[3]) for r in grp] for grp in plural_rules]
+]]
 
 # Suffix categories.
 plural_categories = {
@@ -476,7 +474,8 @@ def pluralize(word, pos=NOUN, custom={}, classical=True):
 # OUT OF OR IN CONNECTION WITH THIS SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THIS SOFTWARE.
 
-singular_rules = [
+# For performance, compile the regular expressions only once:
+singular_rules = [(re.compile(r[0]), r[1]) for r in [
     (r'(?i)(.)ae$'            , '\\1a'    ),
     (r'(?i)(.)itis$'          , '\\1itis' ),
     (r'(?i)(.)eaux$'          , '\\1eau'  ),
@@ -521,10 +520,7 @@ singular_rules = [
     (r'(?i)([ti])a$'          , '\\1um'   ),
     (r'(?i)(n)ews$'           , '\\1ews'  ),
     (r'(?i)s$'                , ''        ),
-]
-
-# For performance, compile the regular expressions only once:
-singular_rules = [(re.compile(r[0]), r[1]) for r in singular_rules]
+]]
 
 singular_uninflected = set((
     "bison"      , "debris"   , "headquarters", "pincers"    , "trout"     ,

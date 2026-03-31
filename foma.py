@@ -20,9 +20,10 @@
 from sys import maxsize, version_info
 from ctypes import *
 from ctypes.util import find_library
+from typing import Any, TypeAlias
 
 fomalibpath = find_library('foma')
-foma = cdll.LoadLibrary(fomalibpath)
+foma = cdll.LoadLibrary(fomalibpath if fomalibpath else "")
 
 
 class FSTstruct(Structure):
@@ -134,9 +135,9 @@ class FST(object):
     functiondefinitions = FSTfunctiondefinitions()
 
     # Generalize over Python2 and Python3 types
-    string_type  = str   if version_info[0] > 2 else basestring
-    text_type    = str   if version_info[0] > 2 else unicode
-    binary_type  = bytes if version_info[0] > 2 else str
+    string_type: TypeAlias = str   #if version_info[0] > 2 else basestring
+    text_type  : TypeAlias = str   #if version_info[0] > 2 else unicode
+    binary_type: TypeAlias = bytes #if version_info[0] > 2 else str
 
     @classmethod
     def define(cls, definition, name):
