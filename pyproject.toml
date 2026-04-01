@@ -10,7 +10,7 @@ authors = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["tsuutina_phrase_translation"]
+include = ["tsuutina_phrase_translation*"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed", "*.txt"]
