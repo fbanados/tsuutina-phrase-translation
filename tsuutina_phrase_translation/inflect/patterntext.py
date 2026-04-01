@@ -44,7 +44,7 @@ except:
 
 # from pattern.text.tree import Tree, Text, Sentence, Slice, Chunk, PNPChunk, Chink, Word, table
 # from pattern.text.tree import SLASH, WORD, POS, CHUNK, PNP, REL, ANCHOR, LEMMA, AND, OR
-from inflect.tree import (
+from .tree import (
     Tree,
     Text,
     Sentence,
@@ -55,12 +55,12 @@ from inflect.tree import (
     Word,
     table,
 )
-from inflect.tree import SLASH, WORD, POS, CHUNK, PNP, REL, ANCHOR, LEMMA, AND, OR
+from .tree import SLASH, WORD, POS, CHUNK, PNP, REL, ANCHOR, LEMMA, AND, OR
 
 DEFAULT = "default"
 
 # from pattern.helpers import encode_string, decode_string
-from inflect.helpers import encode_string, decode_string
+from .helpers import encode_string, decode_string
 
 decode_utf8 = decode_string
 encode_utf8 = encode_string

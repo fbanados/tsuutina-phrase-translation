@@ -39,7 +39,7 @@ from .foma import FST
 
 # Import parts of the 'pattern' module (https://github.com/clips/pattern/) to
 # help inflect and lemmatize English verbs.
-import inflect.inflect as infl
+from .inflect import inflect as infl
 
 # Work-around for iterator-related bug in 'pattern'.  The first time 'lexeme'
 # (or any similar method) is called, it throws an exception, but later calls

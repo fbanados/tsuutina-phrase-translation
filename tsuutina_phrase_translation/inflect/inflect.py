@@ -36,8 +36,8 @@ sys.path.insert(0, os.path.join(MODULE, "..", "..", "..", ".."))
 
 # from pattern.text import Verbs as _Verbs
 # from pattern.text import (
-from inflect.patterntext import Verbs as _Verbs
-from inflect.patterntext import (
+from .patterntext import Verbs as _Verbs
+from .patterntext import (
     INFINITIVE,
     PRESENT,
     PAST,
