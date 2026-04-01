@@ -11,3 +11,6 @@ authors = [
 
 [tool.setuptools.packages.find]
 include = ["tsuutina_phrase_translation"]
+
+[tool.setuptools.package-data]
+"tsuutina_phrase_translation" = ["py.typed"]
