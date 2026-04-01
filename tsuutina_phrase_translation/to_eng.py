@@ -35,7 +35,7 @@ import csv
 import re
 import sys
 
-import foma
+from .foma import FST
 
 # Import parts of the 'pattern' module (https://github.com/clips/pattern/) to
 # help inflect and lemmatize English verbs.
@@ -62,7 +62,7 @@ class TsuutinaGenerator(object):
         # able to call 'flookup -x -i -b $FOMABIN' as a subprocess, pipe the
         # items we need to it, and read its output back in below.  For now,
         # though, this works well enough.)
-        self._fst = foma.FST.load(fomabin)
+        self._fst = FST.load(fomabin)
 
     def apply(self, headword, tags):
         # headword = 'itsiy', tags = '+V+I+...'

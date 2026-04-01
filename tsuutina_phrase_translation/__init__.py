@@ -1,1 +1,1 @@
-from to_eng import EnglishGenerator
+from .to_eng import EnglishGenerator
