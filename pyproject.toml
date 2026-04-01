@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+
+[project]
+dynamic = ["version"]
+name = tsuutina_phrase_translation
+version = "0.0.1"
+dependencies = []
+requires-python = ">=3.8"
+authors = [
+	{name = "Christopher Cox"},
+]
